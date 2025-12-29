@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, Mail, Phone, Calendar, Shield, Heart, AlertCircle, Bell, LogOut, Save, Camera, Droplets, Pill, Activity } from "lucide-react";
+import { User, Phone, Mail, MapPin, Shield, Heart, AlertCircle, Bell, LogOut, Save, Droplets, Activity } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,43 +19,40 @@ export default function Profile() {
 
   // Personal Information
   const [personalInfo, setPersonalInfo] = useState({
-    fullName: "Sarah Johnson",
-    email: "sarah.johnson@email.com",
-    phone: "+1 (555) 123-4567",
-    dateOfBirth: "1990-05-15",
-    gender: "female",
-    address: "123 Health Street, Medical City, MC 12345",
+    fullName: "Aarav Sharma",
+    email: "aarav.sharma@email.com",
+    phone: "+91 98765 43210",
+    dateOfBirth: "1992-03-15",
+    gender: "male",
+    address: "42, Koramangala 4th Block, Bengaluru, Karnataka 560034",
   });
 
   // Medical History
   const [medicalHistory, setMedicalHistory] = useState({
-    bloodType: "O+",
-    allergies: "Penicillin, Peanuts",
-    chronicConditions: "Mild asthma",
-    currentMedications: "Albuterol inhaler (as needed)",
-    pastSurgeries: "Appendectomy (2015)",
-    familyHistory: "Father: Hypertension, Mother: Type 2 Diabetes",
+    bloodType: "B+",
+    allergies: "None known",
+    chronicConditions: "Mild migraines",
+    currentMedications: "None",
+    familyHistory: "Father: Hypertension",
   });
 
   // Emergency Contact
   const [emergencyContact, setEmergencyContact] = useState({
-    name: "John Johnson",
+    name: "Priya Sharma",
     relationship: "Spouse",
-    phone: "+1 (555) 987-6543",
-    email: "john.johnson@email.com",
+    phone: "+91 98765 12345",
+    email: "priya.sharma@email.com",
   });
 
-  // Account Settings
+  // Notification Settings
   const [settings, setSettings] = useState({
     emailNotifications: true,
-    smsNotifications: false,
+    smsNotifications: true,
     appointmentReminders: true,
-    marketingEmails: false,
   });
 
   const handleSave = async () => {
     setIsSaving(true);
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500));
     setIsSaving(false);
     toast({
@@ -79,7 +76,7 @@ export default function Profile() {
         <div className="space-y-1">
           <h1 className="text-2xl font-bold text-foreground">Patient Profile</h1>
           <p className="text-muted-foreground">
-            Manage your personal information and account settings
+            Manage your personal information and settings
           </p>
         </div>
         <Button variant="destructive" onClick={handleLogout}>
@@ -92,13 +89,8 @@ export default function Profile() {
       <Card className="border-border/50">
         <CardContent className="pt-6">
           <div className="flex items-center gap-6">
-            <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-                <User className="h-12 w-12 text-primary" />
-              </div>
-              <Button size="icon" variant="secondary" className="absolute bottom-0 right-0 h-8 w-8 rounded-full">
-                <Camera className="h-4 w-4" />
-              </Button>
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+              <User className="h-10 w-10 text-primary" />
             </div>
             <div>
               <h2 className="text-2xl font-semibold text-foreground">{personalInfo.fullName}</h2>
@@ -111,11 +103,10 @@ export default function Profile() {
 
       {/* Tabs */}
       <Tabs defaultValue="personal" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="personal">Personal Info</TabsTrigger>
           <TabsTrigger value="medical">Medical History</TabsTrigger>
-          <TabsTrigger value="emergency">Emergency</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="emergency">Emergency Contact</TabsTrigger>
         </TabsList>
 
         {/* Personal Information Tab */}
@@ -126,7 +117,7 @@ export default function Profile() {
                 <User className="h-5 w-5 text-primary" />
                 Personal Information
               </CardTitle>
-              <CardDescription>Update your personal details and contact information</CardDescription>
+              <CardDescription>Update your personal details</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
@@ -177,7 +168,6 @@ export default function Profile() {
                       <SelectItem value="male">Male</SelectItem>
                       <SelectItem value="female">Female</SelectItem>
                       <SelectItem value="other">Other</SelectItem>
-                      <SelectItem value="prefer-not">Prefer not to say</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -188,6 +178,48 @@ export default function Profile() {
                     value={personalInfo.address}
                     onChange={(e) => setPersonalInfo({ ...personalInfo, address: e.target.value })}
                   />
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Notification Settings */}
+              <div className="space-y-4">
+                <h4 className="font-medium flex items-center gap-2">
+                  <Bell className="h-4 w-4 text-primary" />
+                  Notification Settings
+                </h4>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">Email Notifications</p>
+                      <p className="text-xs text-muted-foreground">Receive updates via email</p>
+                    </div>
+                    <Switch
+                      checked={settings.emailNotifications}
+                      onCheckedChange={(checked) => setSettings({ ...settings, emailNotifications: checked })}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">SMS Notifications</p>
+                      <p className="text-xs text-muted-foreground">Receive text messages</p>
+                    </div>
+                    <Switch
+                      checked={settings.smsNotifications}
+                      onCheckedChange={(checked) => setSettings({ ...settings, smsNotifications: checked })}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">Appointment Reminders</p>
+                      <p className="text-xs text-muted-foreground">Get reminded before appointments</p>
+                    </div>
+                    <Switch
+                      checked={settings.appointmentReminders}
+                      onCheckedChange={(checked) => setSettings({ ...settings, appointmentReminders: checked })}
+                    />
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -202,7 +234,7 @@ export default function Profile() {
                 <Heart className="h-5 w-5 text-primary" />
                 Medical History
               </CardTitle>
-              <CardDescription>Keep your medical information up to date for better care</CardDescription>
+              <CardDescription>Keep your medical information up to date</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
@@ -239,7 +271,6 @@ export default function Profile() {
                     id="allergies"
                     value={medicalHistory.allergies}
                     onChange={(e) => setMedicalHistory({ ...medicalHistory, allergies: e.target.value })}
-                    placeholder="e.g., Penicillin, Peanuts"
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
@@ -251,30 +282,15 @@ export default function Profile() {
                     id="chronic"
                     value={medicalHistory.chronicConditions}
                     onChange={(e) => setMedicalHistory({ ...medicalHistory, chronicConditions: e.target.value })}
-                    placeholder="List any chronic conditions..."
-                    rows={2}
-                  />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="medications" className="flex items-center gap-2">
-                    <Pill className="h-4 w-4 text-muted-foreground" />
-                    Current Medications
-                  </Label>
-                  <Textarea
-                    id="medications"
-                    value={medicalHistory.currentMedications}
-                    onChange={(e) => setMedicalHistory({ ...medicalHistory, currentMedications: e.target.value })}
-                    placeholder="List medications and dosages..."
                     rows={2}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="surgeries">Past Surgeries</Label>
+                  <Label htmlFor="medications">Current Medications</Label>
                   <Input
-                    id="surgeries"
-                    value={medicalHistory.pastSurgeries}
-                    onChange={(e) => setMedicalHistory({ ...medicalHistory, pastSurgeries: e.target.value })}
-                    placeholder="e.g., Appendectomy (2015)"
+                    id="medications"
+                    value={medicalHistory.currentMedications}
+                    onChange={(e) => setMedicalHistory({ ...medicalHistory, currentMedications: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
@@ -283,7 +299,6 @@ export default function Profile() {
                     id="family"
                     value={medicalHistory.familyHistory}
                     onChange={(e) => setMedicalHistory({ ...medicalHistory, familyHistory: e.target.value })}
-                    placeholder="Relevant family conditions..."
                   />
                 </div>
               </div>
@@ -299,7 +314,7 @@ export default function Profile() {
                 <AlertCircle className="h-5 w-5 text-primary" />
                 Emergency Contact
               </CardTitle>
-              <CardDescription>Who should we contact in case of an emergency?</CardDescription>
+              <CardDescription>Who should we contact in case of emergency?</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2">
@@ -350,107 +365,20 @@ export default function Profile() {
               </div>
 
               <div className="bg-muted/50 rounded-xl p-4 flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                <Shield className="h-5 w-5 text-primary mt-0.5 shrink-0" />
                 <div className="text-sm">
                   <p className="font-medium text-foreground">Important</p>
                   <p className="text-muted-foreground">
-                    This contact will be notified in case of medical emergencies or if we cannot reach you.
+                    This contact will be notified in case of medical emergencies.
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
-
-        {/* Account Settings Tab */}
-        <TabsContent value="settings">
-          <div className="space-y-6">
-            <Card className="border-border/50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5 text-primary" />
-                  Notification Preferences
-                </CardTitle>
-                <CardDescription>Manage how you receive updates and reminders</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-foreground">Email Notifications</p>
-                    <p className="text-sm text-muted-foreground">Receive updates via email</p>
-                  </div>
-                  <Switch
-                    checked={settings.emailNotifications}
-                    onCheckedChange={(checked) => setSettings({ ...settings, emailNotifications: checked })}
-                  />
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-foreground">SMS Notifications</p>
-                    <p className="text-sm text-muted-foreground">Receive text messages for important updates</p>
-                  </div>
-                  <Switch
-                    checked={settings.smsNotifications}
-                    onCheckedChange={(checked) => setSettings({ ...settings, smsNotifications: checked })}
-                  />
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-foreground">Appointment Reminders</p>
-                    <p className="text-sm text-muted-foreground">Get reminded before scheduled appointments</p>
-                  </div>
-                  <Switch
-                    checked={settings.appointmentReminders}
-                    onCheckedChange={(checked) => setSettings({ ...settings, appointmentReminders: checked })}
-                  />
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-foreground">Marketing Emails</p>
-                    <p className="text-sm text-muted-foreground">Receive health tips and promotional offers</p>
-                  </div>
-                  <Switch
-                    checked={settings.marketingEmails}
-                    onCheckedChange={(checked) => setSettings({ ...settings, marketingEmails: checked })}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border/50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-primary" />
-                  Security
-                </CardTitle>
-                <CardDescription>Manage your account security settings</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-foreground">Change Password</p>
-                    <p className="text-sm text-muted-foreground">Update your account password</p>
-                  </div>
-                  <Button variant="outline">Change</Button>
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-foreground">Two-Factor Authentication</p>
-                    <p className="text-sm text-muted-foreground">Add an extra layer of security</p>
-                  </div>
-                  <Button variant="outline">Enable</Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
       </Tabs>
 
-      {/* Save Button - Fixed at bottom */}
+      {/* Save Button */}
       <div className="flex justify-end gap-4 pt-4 pb-8">
         <Button variant="outline" onClick={() => navigate("/dashboard")}>
           Cancel

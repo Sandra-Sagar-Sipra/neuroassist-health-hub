@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { Calendar, User, CheckCircle2, Clock, Play, Pause, FileText, Brain, Stethoscope, ChevronRight } from "lucide-react";
+import { Calendar, CheckCircle2, Clock, Play, Pause, FileText, Brain, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +17,6 @@ interface Consultation {
   doctorSpecialty: string;
   doctorImage: string;
   status: "completed" | "upcoming";
-  consultationType: "online" | "clinic";
   hasAudio: boolean;
   audioDuration?: number;
   aiSummary?: string;
@@ -29,54 +28,50 @@ const consultations: Consultation[] = [
   {
     id: "1",
     date: new Date(2024, 11, 28, 10, 30),
-    doctorName: "Dr. Sarah Mitchell",
+    doctorName: "Dr. Ananya Sharma",
     doctorSpecialty: "Neurologist",
     doctorImage: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face",
     status: "completed",
-    consultationType: "online",
     hasAudio: true,
     audioDuration: 185,
     symptoms: "Recurring headaches, difficulty concentrating, occasional dizziness",
-    aiSummary: "Patient presented with recurring tension headaches occurring 3-4 times per week over the past month. Symptoms include bilateral pressure-type pain, difficulty concentrating during episodes, and occasional mild dizziness. No visual disturbances or nausea reported. Patient has been under increased work stress recently. Sleep patterns have been irregular.",
-    doctorNotes: "Diagnosis: Tension-type headache, likely stress-related.\n\nRecommendations:\n1. Lifestyle modifications - regular sleep schedule, stress management\n2. Over-the-counter pain relief (ibuprofen) as needed\n3. Consider keeping a headache diary\n4. Follow-up in 4 weeks if symptoms persist\n\nNo red flags identified. CT scan not indicated at this time."
+    aiSummary: "Patient presented with recurring tension headaches occurring 3-4 times per week over the past month. Symptoms include bilateral pressure-type pain, difficulty concentrating during episodes, and occasional mild dizziness. No visual disturbances or nausea reported. Patient has been under increased work stress recently.",
+    doctorNotes: "Diagnosis: Tension-type headache, likely stress-related.\n\nRecommendations:\n1. Lifestyle modifications - regular sleep schedule, stress management\n2. Over-the-counter pain relief as needed\n3. Consider keeping a headache diary\n4. Follow-up in 4 weeks if symptoms persist"
   },
   {
     id: "2",
     date: new Date(2024, 11, 15, 14, 0),
-    doctorName: "Dr. Michael Chen",
+    doctorName: "Dr. Rajesh Kumar",
     doctorSpecialty: "General Physician",
     doctorImage: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop&crop=face",
     status: "completed",
-    consultationType: "clinic",
     hasAudio: true,
     audioDuration: 240,
     symptoms: "Persistent cough, mild fever, fatigue",
-    aiSummary: "Patient reported a persistent dry cough lasting approximately 10 days, accompanied by low-grade fever (99.5°F) and general fatigue. No shortness of breath or chest pain. Throat appears slightly inflamed. Lungs clear on examination.",
-    doctorNotes: "Assessment: Upper respiratory tract infection, viral etiology suspected.\n\nPlan:\n1. Symptomatic treatment with rest and fluids\n2. Prescribed cough suppressant for nighttime use\n3. Fever management with acetaminophen\n4. Return if fever exceeds 101°F or symptoms worsen\n5. COVID test negative"
+    aiSummary: "Patient reported a persistent dry cough lasting approximately 10 days, accompanied by low-grade fever and general fatigue. No shortness of breath or chest pain. Throat appears slightly inflamed.",
+    doctorNotes: "Assessment: Upper respiratory tract infection.\n\nPlan:\n1. Symptomatic treatment with rest and fluids\n2. Prescribed cough suppressant for nighttime use\n3. Return if symptoms worsen"
   },
   {
     id: "3",
-    date: new Date(2025, 0, 5, 11, 0),
-    doctorName: "Dr. Emily Carter",
-    doctorSpecialty: "Cardiologist",
-    doctorImage: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=150&h=150&fit=crop&crop=face",
+    date: new Date(2025, 0, 8, 10, 30),
+    doctorName: "Dr. Ananya Sharma",
+    doctorSpecialty: "Neurologist",
+    doctorImage: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face",
     status: "upcoming",
-    consultationType: "online",
     hasAudio: false,
-    symptoms: "Scheduled follow-up for routine checkup"
+    symptoms: "Follow-up consultation"
   },
   {
     id: "4",
     date: new Date(2024, 10, 20, 9, 0),
-    doctorName: "Dr. Sarah Mitchell",
+    doctorName: "Dr. Ananya Sharma",
     doctorSpecialty: "Neurologist",
     doctorImage: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face",
     status: "completed",
-    consultationType: "online",
     hasAudio: false,
     symptoms: "Initial consultation for sleep issues",
-    aiSummary: "Patient discussed ongoing difficulties with sleep initiation and maintenance. Reports taking 45+ minutes to fall asleep and waking 2-3 times nightly. Daytime fatigue affecting work performance. No use of sleep aids currently.",
-    doctorNotes: "Initial evaluation for insomnia.\n\nRecommendations:\n1. Sleep hygiene education provided\n2. Limit screen time 1 hour before bed\n3. Consider melatonin 3mg before bedtime\n4. Referred for sleep study if no improvement in 4 weeks"
+    aiSummary: "Patient discussed ongoing difficulties with sleep initiation and maintenance. Reports taking 45+ minutes to fall asleep and waking 2-3 times nightly. Daytime fatigue affecting work performance.",
+    doctorNotes: "Initial evaluation for insomnia.\n\nRecommendations:\n1. Sleep hygiene education provided\n2. Limit screen time 1 hour before bed\n3. Consider melatonin 3mg before bedtime"
   }
 ];
 
@@ -101,7 +96,7 @@ export default function PastConsultations() {
       <div className="space-y-2">
         <h1 className="text-2xl font-bold text-foreground">Past Consultations</h1>
         <p className="text-muted-foreground">
-          View your consultation history, recordings, and doctor notes
+          View your consultation history and doctor notes
         </p>
       </div>
 
@@ -144,11 +139,11 @@ export default function PastConsultations() {
                   <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
-                      {format(consultation.date, "MMM d, yyyy")}
+                      {format(consultation.date, "d MMM yyyy")}
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
-                      {format(consultation.date, "h:mm a")}
+                      {format(consultation.date, "h:mm a")} IST
                     </span>
                     {consultation.hasAudio && (
                       <Badge variant="outline" className="text-xs">
@@ -181,7 +176,7 @@ export default function PastConsultations() {
                   <div>
                     <DialogTitle className="text-xl">{selectedConsultation.doctorName}</DialogTitle>
                     <DialogDescription className="mt-1">
-                      {selectedConsultation.doctorSpecialty} • {format(selectedConsultation.date, "MMMM d, yyyy 'at' h:mm a")}
+                      {selectedConsultation.doctorSpecialty} • {format(selectedConsultation.date, "d MMMM yyyy 'at' h:mm a")} IST
                     </DialogDescription>
                     <Badge 
                       variant={selectedConsultation.status === "completed" ? "secondary" : "default"}
@@ -272,7 +267,7 @@ export default function PastConsultations() {
                   {selectedConsultation.doctorNotes && (
                     <div className="space-y-3">
                       <h4 className="font-semibold flex items-center gap-2 text-foreground">
-                        <Stethoscope className="h-4 w-4 text-primary" />
+                        <FileText className="h-4 w-4 text-primary" />
                         Doctor's Notes
                       </h4>
                       <Card className="border-border/50">
@@ -290,7 +285,7 @@ export default function PastConsultations() {
                     <div className="text-center py-8 text-muted-foreground">
                       <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
                       <p className="font-medium">This appointment is upcoming</p>
-                      <p className="text-sm">Notes and recordings will be available after the consultation.</p>
+                      <p className="text-sm">Notes will be available after the consultation.</p>
                     </div>
                   )}
                 </div>
