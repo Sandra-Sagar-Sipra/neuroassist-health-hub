@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
@@ -36,13 +37,17 @@ const Hero = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="gap-2 px-8 py-6 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
-              Get Started
-              <ArrowRight className="w-5 h-5" />
+            <Button size="lg" className="gap-2 px-8 py-6 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300" asChild>
+              <Link to="/signup">
+                Get Started
+                <ArrowRight className="w-5 h-5" />
+              </Link>
             </Button>
-            <Button variant="outline" size="lg" className="gap-2 px-8 py-6 text-base font-semibold border-2">
-              <Play className="w-5 h-5" />
-              Login
+            <Button variant="outline" size="lg" className="gap-2 px-8 py-6 text-base font-semibold border-2" asChild>
+              <Link to="/login">
+                <Play className="w-5 h-5" />
+                Login
+              </Link>
             </Button>
           </div>
           
