@@ -1,26 +1,20 @@
-import { Mic, Calendar, FileText, Clock, Stethoscope } from "lucide-react";
+import { Calendar, FileText, Clock, Stethoscope, Brain, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 
 const quickActions = [
   {
-    title: "Record Symptoms",
-    description: "Describe how you're feeling using voice or text",
-    icon: Mic,
-    href: "/dashboard/symptoms",
+    title: "Book Appointment",
+    description: "Schedule a consultation and describe your symptoms",
+    icon: Calendar,
+    href: "/dashboard/appointments",
     primary: true,
   },
   {
-    title: "Book Appointment",
-    description: "Schedule a consultation with your doctor",
-    icon: Calendar,
-    href: "/dashboard/appointments",
-    primary: false,
-  },
-  {
-    title: "View Previous Reports",
-    description: "Access your medical history and past consultations",
+    title: "View Past Reports",
+    description: "Access your medical history and consultation records",
     icon: FileText,
     href: "/dashboard/consultations",
     primary: false,
@@ -28,14 +22,17 @@ const quickActions = [
 ];
 
 export default function Dashboard() {
-  // Mock patient name - would come from auth context in real app
-  const patientName = "Sarah";
+  const patientName = "Aarav";
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 max-w-5xl mx-auto">
       {/* Welcome Section */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-foreground">
+        <div className="flex items-center gap-3">
+          <Brain className="h-8 w-8 text-primary" />
+          <span className="text-xl font-semibold text-primary">NeuroAssist</span>
+        </div>
+        <h1 className="text-3xl font-bold text-foreground mt-4">
           Hello, {patientName} 👋
         </h1>
         <p className="text-muted-foreground">
@@ -46,7 +43,7 @@ export default function Dashboard() {
       {/* Quick Actions */}
       <section className="space-y-4">
         <h2 className="text-xl font-semibold text-foreground">Quick Actions</h2>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2">
           {quickActions.map((action) => (
             <Card 
               key={action.title}
@@ -57,24 +54,25 @@ export default function Dashboard() {
               }`}
             >
               <CardHeader className="pb-3">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 ${
+                <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-3 ${
                   action.primary 
                     ? "bg-primary text-primary-foreground" 
                     : "bg-accent text-accent-foreground"
                 }`}>
-                  <action.icon className="h-6 w-6" />
+                  <action.icon className="h-7 w-7" />
                 </div>
-                <CardTitle className="text-lg">{action.title}</CardTitle>
-                <CardDescription>{action.description}</CardDescription>
+                <CardTitle className="text-xl">{action.title}</CardTitle>
+                <CardDescription className="text-base">{action.description}</CardDescription>
               </CardHeader>
               <CardContent>
                 <Button 
                   asChild 
                   variant={action.primary ? "default" : "outline"} 
-                  className="w-full"
+                  className="w-full h-11"
                 >
-                  <Link to={action.href}>
-                    {action.primary ? "Start Recording" : "Open"}
+                  <Link to={action.href} className="flex items-center gap-2">
+                    {action.primary ? "Book Now" : "View Reports"}
+                    <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
               </CardContent>
@@ -97,13 +95,28 @@ export default function Dashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="bg-accent/50 rounded-xl p-4 space-y-2">
-              <p className="font-medium text-foreground">Dr. Emily Carter</p>
-              <p className="text-sm text-muted-foreground">General Consultation</p>
+            <div className="bg-accent/50 rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <img
+                    src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=80&h=80&fit=crop&crop=face"
+                    alt="Dr. Ananya Sharma"
+                    className="w-10 h-10 rounded-full object-cover border-2 border-primary/20"
+                  />
+                  <div>
+                    <p className="font-medium text-foreground">Dr. Ananya Sharma</p>
+                    <p className="text-sm text-muted-foreground">Neurology</p>
+                  </div>
+                </div>
+                <Badge variant="secondary">Confirmed</Badge>
+              </div>
               <div className="flex items-center gap-2 text-sm text-primary font-medium">
                 <Calendar className="h-4 w-4" />
-                <span>Jan 5, 2025 at 10:00 AM</span>
+                <span>8 Jan 2025 at 10:30 AM IST</span>
               </div>
+              <p className="text-sm text-muted-foreground">
+                NeuroAssist Clinic, Bengaluru
+              </p>
             </div>
             <Button variant="outline" className="w-full mt-4" asChild>
               <Link to="/dashboard/appointments">Manage Appointments</Link>
@@ -123,11 +136,15 @@ export default function Dashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="bg-accent/50 rounded-xl p-4 space-y-2">
-              <p className="font-medium text-foreground">Dec 20, 2024</p>
+            <div className="bg-accent/50 rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="font-medium text-foreground">28 Dec 2024</p>
+                <Badge variant="outline">Completed</Badge>
+              </div>
+              <p className="text-sm text-foreground font-medium">Dr. Ananya Sharma</p>
               <p className="text-sm text-muted-foreground">
-                Routine checkup completed. Blood pressure normal. 
-                Follow-up recommended in 2 weeks.
+                Tension-type headache assessment completed. Lifestyle modifications recommended. 
+                Follow-up scheduled for symptom review.
               </p>
             </div>
             <Button variant="outline" className="w-full mt-4" asChild>

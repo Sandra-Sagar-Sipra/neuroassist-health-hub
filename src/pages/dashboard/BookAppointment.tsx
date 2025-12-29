@@ -4,7 +4,6 @@ import {
   Calendar as CalendarIcon, 
   Clock, 
   MapPin, 
-  User, 
   Mic, 
   MicOff, 
   Play, 
@@ -12,7 +11,6 @@ import {
   RefreshCw,
   Shield,
   CheckCircle2,
-  Stethoscope,
   Brain
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,7 +34,6 @@ const doctorInfo = {
   image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face",
   experience: "12+ years",
   rating: 4.9,
-  consultationFee: "₹1,500"
 };
 
 export default function BookAppointment() {
@@ -66,7 +63,7 @@ export default function BookAppointment() {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
-  const isFormComplete = date && selectedTime && (audioBlob || additionalNotes.trim());
+  const isFormComplete = date && selectedTime;
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -222,7 +219,7 @@ export default function BookAppointment() {
         </div>
         <h1 className="text-3xl font-bold text-foreground">Book Your Consultation</h1>
         <p className="text-muted-foreground max-w-xl mx-auto">
-          Schedule your neurology consultation and describe your symptoms for a more personalized experience.
+          Schedule your neurology consultation and describe your symptoms for a personalized experience.
         </p>
       </div>
 
@@ -231,7 +228,7 @@ export default function BookAppointment() {
         <div className="lg:col-span-2 space-y-6">
           
           {/* SECTION 1: Date & Time Selection */}
-          <Card className="border-border/50 animate-fade-in">
+          <Card className="border-border/50">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-xl">
                 <CalendarIcon className="h-5 w-5 text-primary" />
@@ -284,10 +281,10 @@ export default function BookAppointment() {
           </Card>
 
           {/* SECTION 2: Doctor Information */}
-          <Card className="border-border/50 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+          <Card className="border-border/50">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-xl">
-                <Stethoscope className="h-5 w-5 text-primary" />
+                <Brain className="h-5 w-5 text-primary" />
                 Your Specialist
               </CardTitle>
               <CardDescription>You will be consulting with our expert neurologist</CardDescription>
@@ -313,7 +310,7 @@ export default function BookAppointment() {
                     {doctorInfo.location}
                   </div>
                 </div>
-                <div className="text-right">
+                <div className="text-right hidden sm:block">
                   <p className="text-sm text-muted-foreground">Rating</p>
                   <p className="text-lg font-semibold text-foreground">⭐ {doctorInfo.rating}</p>
                 </div>
@@ -322,7 +319,7 @@ export default function BookAppointment() {
           </Card>
 
           {/* SECTION 3: Record Symptoms */}
-          <Card className="border-border/50 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          <Card className="border-border/50">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-xl">
                 <Mic className="h-5 w-5 text-primary" />
@@ -444,7 +441,7 @@ export default function BookAppointment() {
         {/* Right Column - Summary */}
         <div className="space-y-6">
           {/* Appointment Summary Card */}
-          <Card className="border-border/50 sticky top-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+          <Card className="border-border/50 sticky top-6">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Appointment Summary</CardTitle>
             </CardHeader>
@@ -493,13 +490,8 @@ export default function BookAppointment() {
 
               <Separator />
 
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Consultation Fee</span>
-                <span className="font-bold text-xl text-foreground">{doctorInfo.consultationFee}</span>
-              </div>
-
               <Button
-                className="w-full h-12 text-base mt-4"
+                className="w-full h-12 text-base"
                 disabled={!isFormComplete || isConfirming}
                 onClick={handleConfirm}
               >
@@ -518,14 +510,14 @@ export default function BookAppointment() {
 
               {!isFormComplete && (
                 <p className="text-xs text-center text-muted-foreground">
-                  Please select date, time, and describe your symptoms
+                  Please select a date and time to continue
                 </p>
               )}
             </CardContent>
           </Card>
 
           {/* Trust Indicators */}
-          <Card className="border-border/50 bg-muted/20 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+          <Card className="border-border/50 bg-muted/20">
             <CardContent className="pt-6 space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -533,16 +525,7 @@ export default function BookAppointment() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground">100% Secure</p>
-                  <p className="text-xs text-muted-foreground">HIPAA Compliant</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <User className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">10,000+ Patients</p>
-                  <p className="text-xs text-muted-foreground">Trusted by many</p>
+                  <p className="text-xs text-muted-foreground">Your data is protected</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -551,7 +534,7 @@ export default function BookAppointment() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground">Easy Rescheduling</p>
-                  <p className="text-xs text-muted-foreground">Cancel anytime</p>
+                  <p className="text-xs text-muted-foreground">Modify anytime</p>
                 </div>
               </div>
             </CardContent>
