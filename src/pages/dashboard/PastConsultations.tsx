@@ -1,78 +1,304 @@
-import { FileText, Download, Calendar } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { format } from "date-fns";
+import { Calendar, User, CheckCircle2, Clock, Play, Pause, FileText, Brain, Stethoscope, ChevronRight } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Slider } from "@/components/ui/slider";
+import { cn } from "@/lib/utils";
 
-const consultations = [
+interface Consultation {
+  id: string;
+  date: Date;
+  doctorName: string;
+  doctorSpecialty: string;
+  doctorImage: string;
+  status: "completed" | "upcoming";
+  consultationType: "online" | "clinic";
+  hasAudio: boolean;
+  audioDuration?: number;
+  aiSummary?: string;
+  doctorNotes?: string;
+  symptoms?: string;
+}
+
+const consultations: Consultation[] = [
   {
-    id: 1,
-    date: "Dec 20, 2024",
-    doctor: "Dr. Emily Carter",
-    type: "General Checkup",
-    summary: "Routine checkup completed. All vitals normal.",
+    id: "1",
+    date: new Date(2024, 11, 28, 10, 30),
+    doctorName: "Dr. Sarah Mitchell",
+    doctorSpecialty: "Neurologist",
+    doctorImage: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face",
     status: "completed",
+    consultationType: "online",
+    hasAudio: true,
+    audioDuration: 185,
+    symptoms: "Recurring headaches, difficulty concentrating, occasional dizziness",
+    aiSummary: "Patient presented with recurring tension headaches occurring 3-4 times per week over the past month. Symptoms include bilateral pressure-type pain, difficulty concentrating during episodes, and occasional mild dizziness. No visual disturbances or nausea reported. Patient has been under increased work stress recently. Sleep patterns have been irregular.",
+    doctorNotes: "Diagnosis: Tension-type headache, likely stress-related.\n\nRecommendations:\n1. Lifestyle modifications - regular sleep schedule, stress management\n2. Over-the-counter pain relief (ibuprofen) as needed\n3. Consider keeping a headache diary\n4. Follow-up in 4 weeks if symptoms persist\n\nNo red flags identified. CT scan not indicated at this time."
   },
   {
-    id: 2,
-    date: "Dec 5, 2024",
-    doctor: "Dr. Michael Chen",
-    type: "Follow-up",
-    summary: "Blood pressure monitoring. Medication adjusted.",
+    id: "2",
+    date: new Date(2024, 11, 15, 14, 0),
+    doctorName: "Dr. Michael Chen",
+    doctorSpecialty: "General Physician",
+    doctorImage: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop&crop=face",
     status: "completed",
+    consultationType: "clinic",
+    hasAudio: true,
+    audioDuration: 240,
+    symptoms: "Persistent cough, mild fever, fatigue",
+    aiSummary: "Patient reported a persistent dry cough lasting approximately 10 days, accompanied by low-grade fever (99.5°F) and general fatigue. No shortness of breath or chest pain. Throat appears slightly inflamed. Lungs clear on examination.",
+    doctorNotes: "Assessment: Upper respiratory tract infection, viral etiology suspected.\n\nPlan:\n1. Symptomatic treatment with rest and fluids\n2. Prescribed cough suppressant for nighttime use\n3. Fever management with acetaminophen\n4. Return if fever exceeds 101°F or symptoms worsen\n5. COVID test negative"
   },
   {
-    id: 3,
-    date: "Nov 15, 2024",
-    doctor: "Dr. Sarah Williams",
-    type: "Specialist Consultation",
-    summary: "Neurological assessment. No concerns found.",
-    status: "completed",
+    id: "3",
+    date: new Date(2025, 0, 5, 11, 0),
+    doctorName: "Dr. Emily Carter",
+    doctorSpecialty: "Cardiologist",
+    doctorImage: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=150&h=150&fit=crop&crop=face",
+    status: "upcoming",
+    consultationType: "online",
+    hasAudio: false,
+    symptoms: "Scheduled follow-up for routine checkup"
   },
+  {
+    id: "4",
+    date: new Date(2024, 10, 20, 9, 0),
+    doctorName: "Dr. Sarah Mitchell",
+    doctorSpecialty: "Neurologist",
+    doctorImage: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face",
+    status: "completed",
+    consultationType: "online",
+    hasAudio: false,
+    symptoms: "Initial consultation for sleep issues",
+    aiSummary: "Patient discussed ongoing difficulties with sleep initiation and maintenance. Reports taking 45+ minutes to fall asleep and waking 2-3 times nightly. Daytime fatigue affecting work performance. No use of sleep aids currently.",
+    doctorNotes: "Initial evaluation for insomnia.\n\nRecommendations:\n1. Sleep hygiene education provided\n2. Limit screen time 1 hour before bed\n3. Consider melatonin 3mg before bedtime\n4. Referred for sleep study if no improvement in 4 weeks"
+  }
 ];
 
 export default function PastConsultations() {
+  const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioProgress, setAudioProgress] = useState(0);
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const togglePlayback = () => {
+    setIsPlaying(!isPlaying);
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header */}
       <div className="space-y-2">
         <h1 className="text-2xl font-bold text-foreground">Past Consultations</h1>
         <p className="text-muted-foreground">
-          Review your medical history and previous consultations.
+          View your consultation history, recordings, and doctor notes
         </p>
       </div>
 
+      {/* Consultations List */}
       <div className="space-y-4">
         {consultations.map((consultation) => (
-          <Card key={consultation.id} className="border-border/50">
-            <CardHeader className="flex flex-row items-start justify-between pb-3">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <FileText className="h-6 w-6 text-primary" />
+          <Card 
+            key={consultation.id} 
+            className={cn(
+              "border-border/50 hover:shadow-md transition-all cursor-pointer",
+              consultation.status === "upcoming" && "border-primary/30 bg-primary/5"
+            )}
+            onClick={() => setSelectedConsultation(consultation)}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center gap-4">
+                {/* Doctor Image */}
+                <img
+                  src={consultation.doctorImage}
+                  alt={consultation.doctorName}
+                  className="w-14 h-14 rounded-full object-cover border-2 border-border"
+                />
+
+                {/* Details */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold text-foreground truncate">{consultation.doctorName}</h3>
+                    <Badge 
+                      variant={consultation.status === "completed" ? "secondary" : "default"}
+                      className="shrink-0"
+                    >
+                      {consultation.status === "completed" ? (
+                        <><CheckCircle2 className="h-3 w-3 mr-1" /> Completed</>
+                      ) : (
+                        <><Clock className="h-3 w-3 mr-1" /> Upcoming</>
+                      )}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{consultation.doctorSpecialty}</p>
+                  <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      {format(consultation.date, "MMM d, yyyy")}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      {format(consultation.date, "h:mm a")}
+                    </span>
+                    {consultation.hasAudio && (
+                      <Badge variant="outline" className="text-xs">
+                        <Play className="h-3 w-3 mr-1" /> Recording
+                      </Badge>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-lg">{consultation.type}</CardTitle>
-                  <CardDescription>{consultation.doctor}</CardDescription>
-                </div>
+
+                {/* Arrow */}
+                <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
               </div>
-              <Badge variant="secondary" className="bg-green-100 text-green-700">
-                {consultation.status}
-              </Badge>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="h-4 w-4" />
-                <span>{consultation.date}</span>
-              </div>
-              <p className="text-sm text-foreground bg-accent/50 p-3 rounded-lg">
-                {consultation.summary}
-              </p>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Download Report
-              </Button>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      {/* Detail Modal */}
+      <Dialog open={!!selectedConsultation} onOpenChange={() => setSelectedConsultation(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] p-0">
+          {selectedConsultation && (
+            <>
+              <DialogHeader className="p-6 pb-4">
+                <div className="flex items-center gap-4">
+                  <img
+                    src={selectedConsultation.doctorImage}
+                    alt={selectedConsultation.doctorName}
+                    className="w-16 h-16 rounded-full object-cover border-2 border-primary/20"
+                  />
+                  <div>
+                    <DialogTitle className="text-xl">{selectedConsultation.doctorName}</DialogTitle>
+                    <DialogDescription className="mt-1">
+                      {selectedConsultation.doctorSpecialty} • {format(selectedConsultation.date, "MMMM d, yyyy 'at' h:mm a")}
+                    </DialogDescription>
+                    <Badge 
+                      variant={selectedConsultation.status === "completed" ? "secondary" : "default"}
+                      className="mt-2"
+                    >
+                      {selectedConsultation.status === "completed" ? "Completed" : "Upcoming"}
+                    </Badge>
+                  </div>
+                </div>
+              </DialogHeader>
+
+              <ScrollArea className="max-h-[60vh]">
+                <div className="px-6 pb-6 space-y-6">
+                  {/* Symptoms */}
+                  {selectedConsultation.symptoms && (
+                    <div className="space-y-2">
+                      <h4 className="font-semibold flex items-center gap-2 text-foreground">
+                        <FileText className="h-4 w-4 text-primary" />
+                        Reported Symptoms
+                      </h4>
+                      <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                        {selectedConsultation.symptoms}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Audio Playback */}
+                  {selectedConsultation.hasAudio && selectedConsultation.audioDuration && (
+                    <div className="space-y-3">
+                      <h4 className="font-semibold flex items-center gap-2 text-foreground">
+                        <Play className="h-4 w-4 text-primary" />
+                        Consultation Recording
+                      </h4>
+                      <Card className="border-border/50 bg-muted/30">
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-4">
+                            <Button
+                              size="icon"
+                              variant={isPlaying ? "secondary" : "default"}
+                              className="w-12 h-12 rounded-full shrink-0"
+                              onClick={togglePlayback}
+                            >
+                              {isPlaying ? (
+                                <Pause className="h-5 w-5" />
+                              ) : (
+                                <Play className="h-5 w-5 ml-0.5" />
+                              )}
+                            </Button>
+                            <div className="flex-1 space-y-2">
+                              <Slider
+                                value={[audioProgress]}
+                                onValueChange={([value]) => setAudioProgress(value)}
+                                max={100}
+                                step={1}
+                                className="w-full"
+                              />
+                              <div className="flex justify-between text-xs text-muted-foreground">
+                                <span>{formatDuration(Math.floor(audioProgress * selectedConsultation.audioDuration / 100))}</span>
+                                <span>{formatDuration(selectedConsultation.audioDuration)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+
+                  <Separator />
+
+                  {/* AI Summary */}
+                  {selectedConsultation.aiSummary && (
+                    <div className="space-y-3">
+                      <h4 className="font-semibold flex items-center gap-2 text-foreground">
+                        <Brain className="h-4 w-4 text-primary" />
+                        AI-Generated Summary
+                      </h4>
+                      <Card className="border-primary/20 bg-primary/5">
+                        <CardContent className="p-4">
+                          <p className="text-sm text-foreground leading-relaxed">
+                            {selectedConsultation.aiSummary}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+
+                  {/* Doctor Notes */}
+                  {selectedConsultation.doctorNotes && (
+                    <div className="space-y-3">
+                      <h4 className="font-semibold flex items-center gap-2 text-foreground">
+                        <Stethoscope className="h-4 w-4 text-primary" />
+                        Doctor's Notes
+                      </h4>
+                      <Card className="border-border/50">
+                        <CardContent className="p-4">
+                          <pre className="text-sm text-foreground whitespace-pre-wrap font-sans leading-relaxed">
+                            {selectedConsultation.doctorNotes}
+                          </pre>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+
+                  {/* Upcoming appointment message */}
+                  {selectedConsultation.status === "upcoming" && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p className="font-medium">This appointment is upcoming</p>
+                      <p className="text-sm">Notes and recordings will be available after the consultation.</p>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
