@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,6 +47,7 @@ type FormData = {
 type FormErrors = Partial<Record<keyof FormData, string>>;
 
 const SignUp = () => {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -137,10 +138,16 @@ const SignUp = () => {
       return;
     }
     
+    // Show brief toast and redirect to login
     toast({
-      title: "Account created!",
-      description: "Welcome to NeuroAssist. Please check your email to verify your account.",
+      title: "Account created successfully",
+      description: "Please log in with your new credentials.",
     });
+    
+    // Redirect to login after 1.5 seconds
+    setTimeout(() => {
+      navigate("/login");
+    }, 1500);
   };
 
   const steps = [
