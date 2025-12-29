@@ -14,6 +14,7 @@ import {
 import { Activity, ArrowLeft, ArrowRight, Check, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
+import { IndianPhoneInput, validateIndianPhone } from "@/components/IndianPhoneInput";
 
 const signUpSchema = z.object({
   fullName: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name must be less than 100 characters"),
@@ -25,7 +26,7 @@ const signUpSchema = z.object({
     return num >= 1 && num <= 120;
   }, "Please enter a valid age"),
   gender: z.string().min(1, "Please select your gender"),
-  phone: z.string().regex(/^[\d\s\-+()]+$/, "Please enter a valid phone number").min(10, "Phone number must be at least 10 digits"),
+  phone: z.string().refine((val) => validateIndianPhone(val), "Please enter a valid 10-digit Indian mobile number"),
   terms: z.boolean().refine((val) => val === true, "You must accept the terms and privacy policy"),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
@@ -98,8 +99,8 @@ const SignUp = () => {
       if (!formData.gender) newErrors.gender = "Please select your gender";
       
       if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
-      else if (!/^[\d\s\-+()]+$/.test(formData.phone) || formData.phone.replace(/\D/g, '').length < 10) {
-        newErrors.phone = "Please enter a valid phone number";
+      else if (!validateIndianPhone(formData.phone)) {
+        newErrors.phone = "Please enter a valid 10-digit Indian mobile number";
       }
       
       if (!formData.terms) newErrors.terms = "You must accept the terms and privacy policy";
@@ -350,13 +351,11 @@ const SignUp = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>
-                  <Input
+                  <IndianPhoneInput
                     id="phone"
-                    type="tel"
-                    placeholder="+1 (555) 000-0000"
                     value={formData.phone}
-                    onChange={(e) => updateField("phone", e.target.value)}
-                    className={errors.phone ? "border-destructive" : ""}
+                    onChange={(value) => updateField("phone", value)}
+                    error={!!errors.phone}
                   />
                   {errors.phone && (
                     <p className="text-sm text-destructive">{errors.phone}</p>
