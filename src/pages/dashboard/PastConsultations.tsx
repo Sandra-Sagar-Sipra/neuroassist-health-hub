@@ -35,21 +35,21 @@ const consultations: Consultation[] = [
     hasAudio: true,
     audioDuration: 185,
     symptoms: "Recurring headaches, difficulty concentrating, occasional dizziness",
-    aiSummary: "Patient presented with recurring tension headaches occurring 3-4 times per week over the past month. Symptoms include bilateral pressure-type pain, difficulty concentrating during episodes, and occasional mild dizziness. No visual disturbances or nausea reported. Patient has been under increased work stress recently.",
+    aiSummary: "Patient presented with recurring tension headaches occurring 3-4 times per week over the past month. Symptoms include bilateral pressure-type pain, difficulty concentrating during episodes, and occasional mild dizziness. No visual disturbances or nausea reported.",
     doctorNotes: "Diagnosis: Tension-type headache, likely stress-related.\n\nRecommendations:\n1. Lifestyle modifications - regular sleep schedule, stress management\n2. Over-the-counter pain relief as needed\n3. Consider keeping a headache diary\n4. Follow-up in 4 weeks if symptoms persist"
   },
   {
     id: "2",
     date: new Date(2024, 11, 15, 14, 0),
-    doctorName: "Dr. Rajesh Kumar",
-    doctorSpecialty: "General Physician",
+    doctorName: "Dr. Rohan Mehta",
+    doctorSpecialty: "Neurologist",
     doctorImage: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop&crop=face",
     status: "completed",
     hasAudio: true,
     audioDuration: 240,
-    symptoms: "Persistent cough, mild fever, fatigue",
-    aiSummary: "Patient reported a persistent dry cough lasting approximately 10 days, accompanied by low-grade fever and general fatigue. No shortness of breath or chest pain. Throat appears slightly inflamed.",
-    doctorNotes: "Assessment: Upper respiratory tract infection.\n\nPlan:\n1. Symptomatic treatment with rest and fluids\n2. Prescribed cough suppressant for nighttime use\n3. Return if symptoms worsen"
+    symptoms: "Numbness in hands, tingling sensations, muscle weakness",
+    aiSummary: "Patient reported intermittent numbness and tingling in both hands, primarily in the morning. Associated with mild grip weakness. Symptoms have been present for approximately 2 weeks.",
+    doctorNotes: "Assessment: Carpal tunnel syndrome suspected.\n\nPlan:\n1. Nerve conduction study recommended\n2. Wrist splints for nighttime use\n3. Ergonomic assessment at workplace\n4. Follow-up in 3 weeks"
   },
   {
     id: "3",
@@ -59,17 +59,17 @@ const consultations: Consultation[] = [
     doctorImage: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face",
     status: "upcoming",
     hasAudio: false,
-    symptoms: "Follow-up consultation"
+    symptoms: "Follow-up consultation for headache management"
   },
   {
     id: "4",
     date: new Date(2024, 10, 20, 9, 0),
-    doctorName: "Dr. Ananya Sharma",
+    doctorName: "Dr. Kavita Nair",
     doctorSpecialty: "Neurologist",
-    doctorImage: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face",
+    doctorImage: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=150&h=150&fit=crop&crop=face",
     status: "completed",
     hasAudio: false,
-    symptoms: "Initial consultation for sleep issues",
+    symptoms: "Sleep disturbances, difficulty falling asleep, daytime fatigue",
     aiSummary: "Patient discussed ongoing difficulties with sleep initiation and maintenance. Reports taking 45+ minutes to fall asleep and waking 2-3 times nightly. Daytime fatigue affecting work performance.",
     doctorNotes: "Initial evaluation for insomnia.\n\nRecommendations:\n1. Sleep hygiene education provided\n2. Limit screen time 1 hour before bed\n3. Consider melatonin 3mg before bedtime"
   }
@@ -96,7 +96,7 @@ export default function PastConsultations() {
       <div className="space-y-2">
         <h1 className="text-2xl font-bold text-foreground">Past Consultations</h1>
         <p className="text-muted-foreground">
-          View your consultation history and doctor notes
+          View your neurology consultation history
         </p>
       </div>
 
