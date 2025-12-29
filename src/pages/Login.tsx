@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Activity, Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { z } from "zod";
-import { useToast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
   email: z.string().trim().email("Please enter a valid email address"),
@@ -20,6 +19,7 @@ type FormData = {
 type FormErrors = Partial<Record<keyof FormData, string>>;
 
 const Login = () => {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
@@ -27,7 +27,6 @@ const Login = () => {
     password: "",
   });
   const [errors, setErrors] = useState<FormErrors>({});
-  const { toast } = useToast();
 
   const updateField = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -56,10 +55,8 @@ const Login = () => {
     // Simulate login - replace with actual auth logic
     setTimeout(() => {
       setIsLoading(false);
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully logged in.",
-      });
+      // Redirect directly to dashboard without showing toast
+      navigate("/dashboard");
     }, 1000);
   };
 
