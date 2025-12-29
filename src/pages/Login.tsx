@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Activity, Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { z } from "zod";
+import { useAuth } from "@/contexts/AuthContext";
 
 const loginSchema = z.object({
   email: z.string().trim().email("Please enter a valid email address"),
@@ -20,6 +21,7 @@ type FormErrors = Partial<Record<keyof FormData, string>>;
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
@@ -33,6 +35,16 @@ const Login = () => {
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
+  };
+
+  // Extract first name from email (before @) as a fallback
+  const extractNameFromEmail = (email: string): string => {
+    const localPart = email.split("@")[0];
+    // Capitalize first letter and replace dots/underscores with spaces
+    const name = localPart
+      .replace(/[._]/g, " ")
+      .split(" ")[0];
+    return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,10 +64,11 @@ const Login = () => {
     
     setIsLoading(true);
     
-    // Simulate login - replace with actual auth logic
+    // Simulate login - extract name from email for demo
     setTimeout(() => {
       setIsLoading(false);
-      // Redirect directly to dashboard without showing toast
+      const firstName = extractNameFromEmail(formData.email);
+      login(formData.email, firstName);
       navigate("/dashboard");
     }, 1000);
   };

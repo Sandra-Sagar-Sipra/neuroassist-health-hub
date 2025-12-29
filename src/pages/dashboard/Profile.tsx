@@ -12,16 +12,18 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { IndianPhoneInput } from "@/components/IndianPhoneInput";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Profile() {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
 
-  // Personal Information
+  // Personal Information - use auth user data with fallbacks
   const [personalInfo, setPersonalInfo] = useState({
-    fullName: "Aarav Sharma",
-    email: "aarav.sharma@email.com",
+    fullName: user?.firstName ? `${user.firstName} Sharma` : "User",
+    email: user?.email || "user@email.com",
     phone: "98765 43210",
     dateOfBirth: "1992-03-15",
     gender: "male",
@@ -63,10 +65,7 @@ export default function Profile() {
   };
 
   const handleLogout = () => {
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out.",
-    });
+    logout();
     navigate("/login");
   };
 
