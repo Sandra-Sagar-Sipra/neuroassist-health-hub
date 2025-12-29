@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
 
 const quickActions = [
   {
@@ -22,7 +23,8 @@ const quickActions = [
 ];
 
 export default function Dashboard() {
-  const patientName = "Aarav";
+  const { user } = useAuth();
+  const displayName = user?.firstName || "there";
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
@@ -33,7 +35,7 @@ export default function Dashboard() {
           <span className="text-xl font-semibold text-primary">NeuroAssist</span>
         </div>
         <h1 className="text-3xl font-bold text-foreground mt-4">
-          Hello, {patientName} 👋
+          Hello, {displayName} 👋
         </h1>
         <p className="text-muted-foreground">
           Welcome back to your health dashboard. How can we help you today?
