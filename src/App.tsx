@@ -9,7 +9,6 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { DashboardLayout } from "./components/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
-import RecordSymptoms from "./pages/dashboard/RecordSymptoms";
 import BookAppointment from "./pages/dashboard/BookAppointment";
 import PastConsultations from "./pages/dashboard/PastConsultations";
 import Profile from "./pages/dashboard/Profile";
@@ -28,7 +27,6 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<Dashboard />} />
-            <Route path="symptoms" element={<RecordSymptoms />} />
             <Route path="appointments" element={<BookAppointment />} />
             <Route path="consultations" element={<PastConsultations />} />
             <Route path="profile" element={<Profile />} />

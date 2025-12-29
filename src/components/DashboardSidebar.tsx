@@ -1,6 +1,5 @@
 import { 
   LayoutDashboard, 
-  Mic, 
   Calendar, 
   FileText, 
   User, 
@@ -23,7 +22,6 @@ import {
 
 const mainNavItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Record Symptoms", url: "/dashboard/symptoms", icon: Mic },
   { title: "Book Appointment", url: "/dashboard/appointments", icon: Calendar },
   { title: "Past Consultations", url: "/dashboard/consultations", icon: FileText },
   { title: "Profile", url: "/dashboard/profile", icon: User },
