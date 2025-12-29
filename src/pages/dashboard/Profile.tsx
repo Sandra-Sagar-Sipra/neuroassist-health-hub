@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { IndianPhoneInput } from "@/components/IndianPhoneInput";
 
 export default function Profile() {
   const { toast } = useToast();
@@ -21,7 +22,7 @@ export default function Profile() {
   const [personalInfo, setPersonalInfo] = useState({
     fullName: "Aarav Sharma",
     email: "aarav.sharma@email.com",
-    phone: "+91 98765 43210",
+    phone: "98765 43210",
     dateOfBirth: "1992-03-15",
     gender: "male",
     address: "42, Koramangala 4th Block, Bengaluru, Karnataka 560034",
@@ -40,7 +41,7 @@ export default function Profile() {
   const [emergencyContact, setEmergencyContact] = useState({
     name: "Priya Sharma",
     relationship: "Spouse",
-    phone: "+91 98765 12345",
+    phone: "98765 12345",
     email: "priya.sharma@email.com",
   });
 
@@ -140,10 +141,10 @@ export default function Profile() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>
-                  <Input
+                  <IndianPhoneInput
                     id="phone"
                     value={personalInfo.phone}
-                    onChange={(e) => setPersonalInfo({ ...personalInfo, phone: e.target.value })}
+                    onChange={(value) => setPersonalInfo({ ...personalInfo, phone: value })}
                   />
                 </div>
                 <div className="space-y-2">
@@ -347,10 +348,10 @@ export default function Profile() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="emergencyPhone">Phone Number</Label>
-                  <Input
+                  <IndianPhoneInput
                     id="emergencyPhone"
                     value={emergencyContact.phone}
-                    onChange={(e) => setEmergencyContact({ ...emergencyContact, phone: e.target.value })}
+                    onChange={(value) => setEmergencyContact({ ...emergencyContact, phone: value })}
                   />
                 </div>
                 <div className="space-y-2">
