@@ -10,6 +10,7 @@ import NotFound from "./pages/NotFound";
 import { DashboardLayout } from "./components/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import BookAppointment from "./pages/dashboard/BookAppointment";
+import AppointmentConfirmed from "./pages/dashboard/AppointmentConfirmed";
 import PastConsultations from "./pages/dashboard/PastConsultations";
 import Profile from "./pages/dashboard/Profile";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="appointments" element={<BookAppointment />} />
+              <Route path="appointment-confirmed" element={<AppointmentConfirmed />} />
               <Route path="consultations" element={<PastConsultations />} />
               <Route path="profile" element={<Profile />} />
             </Route>

@@ -215,17 +215,32 @@ export default function BookAppointment() {
     setCurrentStep(1);
   };
 
+  const generateBookingId = () => {
+    const year = new Date().getFullYear();
+    const randomNum = Math.floor(10000 + Math.random() * 90000);
+    return `NA-${year}-${randomNum}`;
+  };
+
   const handleSubmitSymptoms = async () => {
     setIsSubmitting(true);
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    toast({
-      title: "Appointment Booked Successfully!",
-      description: `Your appointment with ${doctorInfo.name} is confirmed for ${format(date!, "d MMMM yyyy")} at ${selectedTime} IST.`,
-    });
+    const bookingData = {
+      date: date!,
+      time: selectedTime!,
+      doctorName: doctorInfo.name,
+      specialization: doctorInfo.specialization,
+      location: doctorInfo.location,
+      audioUrl: audioUrl || undefined,
+      notes: additionalNotes || undefined,
+      bookingId: generateBookingId(),
+    };
     
     setIsSubmitting(false);
-    navigate("/dashboard");
+    navigate("/dashboard/appointment-confirmed", { 
+      state: { bookingData },
+      replace: true // Prevent back navigation to booking form
+    });
   };
 
   useEffect(() => {
