@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 import { 
   Calendar as CalendarIcon, 
   Clock, 
@@ -8,10 +9,13 @@ import {
   MicOff, 
   Play, 
   Pause, 
+  Square,
   RefreshCw,
   Shield,
   CheckCircle2,
-  Brain
+  Brain,
+  ArrowRight,
+  ArrowLeft
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,15 +33,17 @@ const timeSlots = [
 
 const doctorInfo = {
   name: "Dr. Ananya Sharma",
-  specialization: "Neurology",
-  location: "NeuroAssist Clinic, Bengaluru, Karnataka",
+  specialization: "Neurologist",
+  location: "NeuroAssist Clinic, Bengaluru",
   image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face",
-  experience: "12+ years",
-  rating: 4.9,
 };
 
 export default function BookAppointment() {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  
+  // Step State (1 = Date & Time, 2 = Record Symptoms)
+  const [currentStep, setCurrentStep] = useState(1);
   
   // Date & Time State
   const [date, setDate] = useState<Date | undefined>(undefined);
@@ -45,6 +51,7 @@ export default function BookAppointment() {
   
   // Recording State
   const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -53,7 +60,7 @@ export default function BookAppointment() {
   const [additionalNotes, setAdditionalNotes] = useState("");
   
   // Booking State
-  const [isConfirming, setIsConfirming] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -62,8 +69,9 @@ export default function BookAppointment() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
-  const isFormComplete = date && selectedTime;
+  const isStep1Complete = date && selectedTime;
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -72,7 +80,7 @@ export default function BookAppointment() {
   };
 
   const updateWaveform = useCallback(() => {
-    if (analyserRef.current && isRecording) {
+    if (analyserRef.current && isRecording && !isPaused) {
       const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
       analyserRef.current.getByteFrequencyData(dataArray);
       
@@ -92,11 +100,12 @@ export default function BookAppointment() {
       setWaveformData(newWaveform);
       animationFrameRef.current = requestAnimationFrame(updateWaveform);
     }
-  }, [isRecording]);
+  }, [isRecording, isPaused]);
 
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
       
       const audioContext = new AudioContext();
       const source = audioContext.createMediaStreamSource(stream);
@@ -125,6 +134,7 @@ export default function BookAppointment() {
 
       mediaRecorder.start();
       setIsRecording(true);
+      setIsPaused(false);
       setRecordingTime(0);
       
       timerRef.current = setInterval(() => {
@@ -142,15 +152,36 @@ export default function BookAppointment() {
     }
   };
 
+  const pauseRecording = () => {
+    if (mediaRecorderRef.current && isRecording && !isPaused) {
+      mediaRecorderRef.current.pause();
+      setIsPaused(true);
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    }
+  };
+
+  const resumeRecording = () => {
+    if (mediaRecorderRef.current && isRecording && isPaused) {
+      mediaRecorderRef.current.resume();
+      setIsPaused(false);
+      timerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+      animationFrameRef.current = requestAnimationFrame(updateWaveform);
+    }
+  };
+
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+      setIsPaused(false);
       
       if (timerRef.current) clearInterval(timerRef.current);
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
       
-      setWaveformData(new Array(30).fill(0.1));
+      setWaveformData(new Array(30).fill(0.3));
     }
   };
 
@@ -170,13 +201,22 @@ export default function BookAppointment() {
     setAudioUrl(null);
     setRecordingTime(0);
     setIsPlaying(false);
+    setIsPaused(false);
     setWaveformData(new Array(30).fill(0.1));
   };
 
-  const handleConfirm = async () => {
-    if (!isFormComplete) return;
-    
-    setIsConfirming(true);
+  const handleConfirmDateTime = () => {
+    if (isStep1Complete) {
+      setCurrentStep(2);
+    }
+  };
+
+  const handleBack = () => {
+    setCurrentStep(1);
+  };
+
+  const handleSubmitSymptoms = async () => {
+    setIsSubmitting(true);
     await new Promise(resolve => setTimeout(resolve, 2000));
     
     toast({
@@ -184,12 +224,8 @@ export default function BookAppointment() {
       description: `Your appointment with ${doctorInfo.name} is confirmed for ${format(date!, "d MMMM yyyy")} at ${selectedTime} IST.`,
     });
     
-    setIsConfirming(false);
-    // Reset form
-    setDate(undefined);
-    setSelectedTime(null);
-    resetRecording();
-    setAdditionalNotes("");
+    setIsSubmitting(false);
+    navigate("/dashboard");
   };
 
   useEffect(() => {
@@ -210,337 +246,422 @@ export default function BookAppointment() {
   }, []);
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 pb-8">
+    <div className="max-w-4xl mx-auto space-y-8 pb-8">
       {/* Page Header */}
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center gap-2 text-primary">
           <Brain className="h-8 w-8" />
           <span className="text-2xl font-bold">NeuroAssist</span>
         </div>
-        <h1 className="text-3xl font-bold text-foreground">Book Your Consultation</h1>
-        <p className="text-muted-foreground max-w-xl mx-auto">
-          Schedule your neurology consultation and describe your symptoms for a personalized experience.
-        </p>
+        
+        {/* Step Indicator */}
+        <div className="flex items-center justify-center gap-4 mt-6">
+          <div className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all",
+            currentStep === 1 
+              ? "bg-primary text-primary-foreground" 
+              : "bg-primary/10 text-primary"
+          )}>
+            <CalendarIcon className="h-4 w-4" />
+            <span>Date & Time</span>
+          </div>
+          <div className="w-8 h-0.5 bg-border" />
+          <div className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all",
+            currentStep === 2 
+              ? "bg-primary text-primary-foreground" 
+              : "bg-muted text-muted-foreground"
+          )}>
+            <Mic className="h-4 w-4" />
+            <span>Record Symptoms</span>
+          </div>
+        </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Left Column - Main Form */}
-        <div className="lg:col-span-2 space-y-6">
-          
-          {/* SECTION 1: Date & Time Selection */}
-          <Card className="border-border/50">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <CalendarIcon className="h-5 w-5 text-primary" />
-                Select Appointment Time
-              </CardTitle>
-              <CardDescription>Choose your preferred date and time slot (IST)</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Calendar */}
-              <div className="flex justify-center">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={setDate}
-                  disabled={(date) => date < new Date() || date.getDay() === 0}
-                  className="rounded-xl border border-border/50 pointer-events-auto"
-                />
-              </div>
-              
-              {/* Time Slots */}
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-foreground">
-                  Available Time Slots {date && `for ${format(date, "d MMMM yyyy")}`}
-                </p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {timeSlots.map((time) => (
-                    <Button
-                      key={time}
-                      variant={selectedTime === time ? "default" : "outline"}
-                      className={cn(
-                        "h-12 transition-all font-medium",
-                        selectedTime === time && "ring-2 ring-primary/20 shadow-md"
-                      )}
-                      onClick={() => setSelectedTime(time)}
-                      disabled={!date}
-                    >
-                      <Clock className="h-4 w-4 mr-2" />
-                      {time}
-                    </Button>
-                  ))}
-                </div>
-                {date && selectedTime && (
-                  <p className="text-sm text-primary font-medium flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4" />
-                    Selected: {format(date, "d MMMM yyyy")} at {selectedTime} IST
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+      {/* STEP 1: Date & Time Selection */}
+      {currentStep === 1 && (
+        <div className="space-y-6">
+          <div className="text-center space-y-2">
+            <h1 className="text-3xl font-bold text-foreground">Book Appointment</h1>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              Select your preferred date and time for your neurology consultation.
+            </p>
+          </div>
 
-          {/* SECTION 2: Doctor Information */}
-          <Card className="border-border/50">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <Brain className="h-5 w-5 text-primary" />
-                Your Specialist
-              </CardTitle>
-              <CardDescription>You will be consulting with our expert neurologist</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-5 p-4 bg-muted/30 rounded-xl">
-                <img
-                  src={doctorInfo.image}
-                  alt={doctorInfo.name}
-                  className="w-20 h-20 rounded-full object-cover border-4 border-primary/10"
-                />
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-foreground">{doctorInfo.name}</h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge variant="secondary" className="font-normal">
-                      <Brain className="h-3 w-3 mr-1" />
-                      {doctorInfo.specialization}
-                    </Badge>
-                    <span className="text-sm text-muted-foreground">• {doctorInfo.experience}</span>
-                  </div>
-                  <div className="flex items-center gap-1 mt-2 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    {doctorInfo.location}
-                  </div>
-                </div>
-                <div className="text-right hidden sm:block">
-                  <p className="text-sm text-muted-foreground">Rating</p>
-                  <p className="text-lg font-semibold text-foreground">⭐ {doctorInfo.rating}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* SECTION 3: Record Symptoms */}
-          <Card className="border-border/50">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <Mic className="h-5 w-5 text-primary" />
-                Describe Your Symptoms
-              </CardTitle>
-              <CardDescription>
-                Please describe your symptoms clearly. You may record your voice or type additional details.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Voice Recording Section */}
-              <div className="bg-muted/30 rounded-xl p-6 space-y-5">
-                {/* Waveform Visualization */}
-                <div className="w-full h-16 flex items-center justify-center gap-1">
-                  {waveformData.map((height, index) => (
-                    <div
-                      key={index}
-                      className={cn(
-                        "w-1.5 rounded-full transition-all duration-75",
-                        isRecording 
-                          ? 'bg-primary' 
-                          : audioBlob 
-                            ? 'bg-primary/60' 
-                            : 'bg-muted-foreground/20'
-                      )}
-                      style={{
-                        height: `${height * 60}px`,
-                        minHeight: '6px',
-                      }}
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Left Column - Form */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Date Selection */}
+              <Card className="border-border/50">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <CalendarIcon className="h-5 w-5 text-primary" />
+                    Select Date
+                  </CardTitle>
+                  <CardDescription>Choose a date for your appointment (only future dates)</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-center">
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      onSelect={setDate}
+                      disabled={(d) => d < new Date() || d.getDay() === 0}
+                      className="rounded-xl border border-border/50 pointer-events-auto"
                     />
-                  ))}
-                </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-                {/* Timer */}
-                <div className="text-center">
-                  <span className="text-3xl font-mono font-semibold text-foreground">
-                    {formatTime(recordingTime)}
-                  </span>
-                </div>
-
-                {/* Recording Controls */}
-                <div className="flex justify-center">
-                  {!audioBlob ? (
-                    <Button
-                      size="lg"
-                      variant={isRecording ? "destructive" : "default"}
-                      className={cn(
-                        "w-20 h-20 rounded-full transition-all duration-300",
-                        isRecording 
-                          ? 'animate-pulse shadow-lg shadow-destructive/30' 
-                          : 'hover:scale-105 shadow-lg shadow-primary/20'
-                      )}
-                      onClick={isRecording ? stopRecording : startRecording}
-                    >
-                      {isRecording ? (
-                        <MicOff className="h-8 w-8" />
-                      ) : (
-                        <Mic className="h-8 w-8" />
-                      )}
-                    </Button>
-                  ) : (
-                    <div className="flex items-center gap-4">
+              {/* Time Slot Selection */}
+              <Card className="border-border/50">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Clock className="h-5 w-5 text-primary" />
+                    Select Time Slot (IST)
+                  </CardTitle>
+                  <CardDescription>
+                    {date 
+                      ? `Available slots for ${format(date, "d MMMM yyyy")}` 
+                      : "Please select a date first"}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {timeSlots.map((time) => (
                       <Button
-                        size="lg"
-                        variant="outline"
-                        className="w-14 h-14 rounded-full"
-                        onClick={togglePlayback}
-                      >
-                        {isPlaying ? (
-                          <Pause className="h-5 w-5" />
-                        ) : (
-                          <Play className="h-5 w-5 ml-0.5" />
+                        key={time}
+                        variant={selectedTime === time ? "default" : "outline"}
+                        className={cn(
+                          "h-12 transition-all font-medium",
+                          selectedTime === time && "ring-2 ring-primary/20 shadow-md"
                         )}
-                      </Button>
-                      <Button
-                        size="lg"
-                        variant="ghost"
-                        className="w-14 h-14 rounded-full"
-                        onClick={resetRecording}
+                        onClick={() => setSelectedTime(time)}
+                        disabled={!date}
                       >
-                        <RefreshCw className="h-5 w-5" />
+                        <Clock className="h-4 w-4 mr-2" />
+                        {time}
                       </Button>
-                    </div>
-                  )}
-                </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
 
-                {/* Status Text */}
-                <p className="text-center text-sm text-muted-foreground">
-                  {isRecording 
-                    ? "Recording... Tap to stop" 
-                    : audioBlob 
-                      ? "Recording complete. Play to review or re-record."
-                      : "Tap the microphone to start recording"
-                  }
-                </p>
-              </div>
+              {/* Doctor Info */}
+              <Card className="border-border/50">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Brain className="h-5 w-5 text-primary" />
+                    Your Specialist
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-5 p-4 bg-muted/30 rounded-xl">
+                    <img
+                      src={doctorInfo.image}
+                      alt={doctorInfo.name}
+                      className="w-16 h-16 rounded-full object-cover border-4 border-primary/10"
+                    />
+                    <div>
+                      <h3 className="text-lg font-semibold text-foreground">{doctorInfo.name}</h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="secondary" className="font-normal">
+                          <Brain className="h-3 w-3 mr-1" />
+                          {doctorInfo.specialization}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-1 mt-2 text-sm text-muted-foreground">
+                        <MapPin className="h-4 w-4" />
+                        {doctorInfo.location}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Right Column - Summary */}
+            <div>
+              <Card className="border-border/50 sticky top-6">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg">Selected Appointment</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Date</span>
+                      <span className="font-medium text-foreground">
+                        {date ? format(date, "d MMM yyyy") : "—"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Time (IST)</span>
+                      <span className="font-medium text-foreground">
+                        {selectedTime || "—"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Doctor</span>
+                      <span className="font-medium text-foreground">{doctorInfo.name}</span>
+                    </div>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <Button 
+                    className="w-full h-12" 
+                    disabled={!isStep1Complete}
+                    onClick={handleConfirmDateTime}
+                  >
+                    Confirm Date & Time
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                  
+                  {!isStep1Complete && (
+                    <p className="text-xs text-muted-foreground text-center">
+                      Please select both date and time to continue
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* STEP 2: Record Symptoms */}
+      {currentStep === 2 && (
+        <div className="space-y-6">
+          <div className="text-center space-y-2">
+            <h1 className="text-3xl font-bold text-foreground">Describe Your Symptoms</h1>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              Please record or type your symptoms clearly. This will help your doctor prepare for the consultation.
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Left Column - Recording */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Appointment Summary */}
+              <Card className="border-primary/30 bg-primary/5">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <CheckCircle2 className="h-5 w-5 text-primary" />
+                    Appointment Summary
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Date</span>
+                      <p className="font-medium text-foreground">{date && format(date, "d MMM yyyy")}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Time (IST)</span>
+                      <p className="font-medium text-foreground">{selectedTime}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Doctor</span>
+                      <p className="font-medium text-foreground">{doctorInfo.name}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Voice Recording Section */}
+              <Card className="border-border/50">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Mic className="h-5 w-5 text-primary" />
+                    Voice Recording
+                  </CardTitle>
+                  <CardDescription>
+                    Record your symptoms using your voice
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="bg-muted/30 rounded-xl p-6 space-y-5">
+                    {/* Waveform Visualization */}
+                    <div className="w-full h-16 flex items-center justify-center gap-1">
+                      {waveformData.map((height, index) => (
+                        <div
+                          key={index}
+                          className={cn(
+                            "w-1.5 rounded-full transition-all duration-75",
+                            isRecording && !isPaused
+                              ? 'bg-primary' 
+                              : audioBlob 
+                                ? 'bg-primary/60' 
+                                : 'bg-muted-foreground/20'
+                          )}
+                          style={{
+                            height: `${height * 60}px`,
+                            minHeight: '6px',
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Timer */}
+                    <div className="text-center">
+                      <span className="text-3xl font-mono font-semibold text-foreground">
+                        {formatTime(recordingTime)}
+                      </span>
+                      {isRecording && isPaused && (
+                        <span className="ml-2 text-sm text-muted-foreground">(Paused)</span>
+                      )}
+                    </div>
+
+                    {/* Recording Controls */}
+                    <div className="flex justify-center gap-4">
+                      {!audioBlob ? (
+                        <>
+                          {!isRecording ? (
+                            <Button
+                              size="lg"
+                              className="w-20 h-20 rounded-full hover:scale-105 shadow-lg shadow-primary/20"
+                              onClick={startRecording}
+                            >
+                              <Mic className="h-8 w-8" />
+                            </Button>
+                          ) : (
+                            <>
+                              {isPaused ? (
+                                <Button
+                                  size="lg"
+                                  variant="outline"
+                                  className="w-14 h-14 rounded-full"
+                                  onClick={resumeRecording}
+                                >
+                                  <Play className="h-5 w-5 ml-0.5" />
+                                </Button>
+                              ) : (
+                                <Button
+                                  size="lg"
+                                  variant="outline"
+                                  className="w-14 h-14 rounded-full"
+                                  onClick={pauseRecording}
+                                >
+                                  <Pause className="h-5 w-5" />
+                                </Button>
+                              )}
+                              <Button
+                                size="lg"
+                                variant="destructive"
+                                className="w-14 h-14 rounded-full"
+                                onClick={stopRecording}
+                              >
+                                <Square className="h-5 w-5" />
+                              </Button>
+                            </>
+                          )}
+                        </>
+                      ) : (
+                        <div className="flex items-center gap-4">
+                          <Button
+                            size="lg"
+                            variant="outline"
+                            className="w-14 h-14 rounded-full"
+                            onClick={togglePlayback}
+                          >
+                            {isPlaying ? (
+                              <Pause className="h-5 w-5" />
+                            ) : (
+                              <Play className="h-5 w-5 ml-0.5" />
+                            )}
+                          </Button>
+                          <Button
+                            size="lg"
+                            variant="ghost"
+                            className="w-14 h-14 rounded-full"
+                            onClick={resetRecording}
+                          >
+                            <RefreshCw className="h-5 w-5" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Status Text */}
+                    <p className="text-center text-sm text-muted-foreground">
+                      {isRecording && !isPaused
+                        ? "Recording... Tap pause or stop" 
+                        : isRecording && isPaused
+                          ? "Paused. Tap play to resume or stop to finish."
+                          : audioBlob 
+                            ? "Recording complete. Play to review or re-record."
+                            : "Tap the microphone to start recording"
+                      }
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Text Input */}
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-foreground">Additional Notes (Optional)</p>
-                <Textarea
-                  placeholder="For example: I have been experiencing frequent headaches and dizziness for the past 3 days."
-                  value={additionalNotes}
-                  onChange={(e) => setAdditionalNotes(e.target.value)}
-                  rows={4}
-                  className="resize-none"
-                />
-              </div>
+              <Card className="border-border/50">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-xl">Additional Notes (Optional)</CardTitle>
+                  <CardDescription>
+                    Type any additional details about your symptoms
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    placeholder="Example: I have been experiencing frequent headaches and dizziness for the past few days."
+                    value={additionalNotes}
+                    onChange={(e) => setAdditionalNotes(e.target.value)}
+                    rows={4}
+                    className="resize-none"
+                  />
+                </CardContent>
+              </Card>
+            </div>
 
-              {/* Security Note */}
-              <div className="flex items-center gap-3 text-sm text-muted-foreground bg-primary/5 rounded-lg p-3">
-                <Shield className="h-5 w-5 text-primary flex-shrink-0" />
-                <p>Your voice recording will be securely analyzed by our medical system.</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Right Column - Summary */}
-        <div className="space-y-6">
-          {/* Appointment Summary Card */}
-          <Card className="border-border/50 sticky top-6">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Appointment Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Date</span>
-                  <span className="font-medium text-foreground">
-                    {date ? format(date, "d MMM yyyy") : "—"}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Time (IST)</span>
-                  <span className="font-medium text-foreground">
-                    {selectedTime || "—"}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Specialist</span>
-                  <span className="font-medium text-foreground text-right text-sm">
-                    {doctorInfo.name}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Location</span>
-                  <span className="font-medium text-foreground text-right text-sm">
-                    Bengaluru
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Symptoms</span>
-                  <span className="font-medium text-foreground">
-                    {audioBlob ? (
-                      <Badge variant="secondary" className="text-xs">
-                        <Mic className="h-3 w-3 mr-1" />
-                        Recorded
-                      </Badge>
-                    ) : additionalNotes.trim() ? (
-                      <Badge variant="secondary" className="text-xs">Typed</Badge>
+            {/* Right Column - Actions */}
+            <div className="space-y-6">
+              <Card className="border-border/50 sticky top-6">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg">Ready to Submit?</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground bg-primary/5 rounded-lg p-3">
+                    <Shield className="h-5 w-5 text-primary flex-shrink-0" />
+                    <p>Your recording and notes are securely stored.</p>
+                  </div>
+                  
+                  <Button 
+                    className="w-full h-12" 
+                    onClick={handleSubmitSymptoms}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        Booking...
+                      </>
                     ) : (
-                      "—"
+                      <>
+                        Submit Symptoms
+                        <CheckCircle2 className="h-4 w-4 ml-2" />
+                      </>
                     )}
-                  </span>
-                </div>
-              </div>
-
-              <Separator />
-
-              <Button
-                className="w-full h-12 text-base"
-                disabled={!isFormComplete || isConfirming}
-                onClick={handleConfirm}
-              >
-                {isConfirming ? (
-                  <>
-                    <div className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
-                    Booking...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="h-5 w-5 mr-2" />
-                    Confirm Appointment
-                  </>
-                )}
-              </Button>
-
-              {!isFormComplete && (
-                <p className="text-xs text-center text-muted-foreground">
-                  Please select a date and time to continue
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Trust Indicators */}
-          <Card className="border-border/50 bg-muted/20">
-            <CardContent className="pt-6 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Shield className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">100% Secure</p>
-                  <p className="text-xs text-muted-foreground">Your data is protected</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Clock className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">Easy Rescheduling</p>
-                  <p className="text-xs text-muted-foreground">Modify anytime</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="w-full h-10" 
+                    onClick={handleBack}
+                    disabled={isSubmitting}
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Date & Time
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
