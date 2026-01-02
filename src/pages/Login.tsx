@@ -3,18 +3,27 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Activity, Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { z } from "zod";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, UserRole } from "@/contexts/AuthContext";
 
 const loginSchema = z.object({
   email: z.string().trim().email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
+  role: z.enum(["patient", "front-desk", "doctor"], { required_error: "Please select your role" }),
 });
 
 type FormData = {
   email: string;
   password: string;
+  role: string;
 };
 
 type FormErrors = Partial<Record<keyof FormData, string>>;
@@ -27,6 +36,7 @@ const Login = () => {
   const [formData, setFormData] = useState<FormData>({
     email: "",
     password: "",
+    role: "patient",
   });
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -68,8 +78,17 @@ const Login = () => {
     setTimeout(() => {
       setIsLoading(false);
       const firstName = extractNameFromEmail(formData.email);
-      login(formData.email, firstName);
-      navigate("/dashboard");
+      const role = formData.role as UserRole;
+      login(formData.email, firstName, role);
+      
+      // Role-based redirection
+      if (role === "front-desk") {
+        navigate("/admin/dashboard");
+      } else if (role === "doctor") {
+        navigate("/doctor/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     }, 1000);
   };
 
@@ -184,6 +203,23 @@ const Login = () => {
               </div>
               {errors.password && (
                 <p className="text-sm text-destructive">{errors.password}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="role">Login as</Label>
+              <Select value={formData.role} onValueChange={(value) => updateField("role", value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your role" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border border-border z-50">
+                  <SelectItem value="patient">Patient</SelectItem>
+                  <SelectItem value="front-desk">Front Desk Staff</SelectItem>
+                  <SelectItem value="doctor">Doctor</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.role && (
+                <p className="text-sm text-destructive">{errors.role}</p>
               )}
             </div>
             

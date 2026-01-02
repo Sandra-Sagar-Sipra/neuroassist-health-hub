@@ -21,6 +21,7 @@ const signUpSchema = z.object({
   email: z.string().trim().email("Please enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
+  role: z.enum(["patient", "front-desk", "doctor"], { required_error: "Please select your role" }),
   age: z.string().refine((val) => {
     const num = parseInt(val);
     return num >= 1 && num <= 120;
@@ -38,6 +39,7 @@ type FormData = {
   email: string;
   password: string;
   confirmPassword: string;
+  role: string;
   age: string;
   gender: string;
   phone: string;
@@ -56,6 +58,7 @@ const SignUp = () => {
     email: "",
     password: "",
     confirmPassword: "",
+    role: "",
     age: "",
     gender: "",
     phone: "",
@@ -80,6 +83,8 @@ const SignUp = () => {
       
       if (!formData.email.trim()) newErrors.email = "Email is required";
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = "Please enter a valid email";
+
+      if (!formData.role) newErrors.role = "Please select your role";
     }
     
     if (currentStep === 2) {
@@ -257,6 +262,23 @@ const SignUp = () => {
                   />
                   {errors.email && (
                     <p className="text-sm text-destructive">{errors.email}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="role">I am a</Label>
+                  <Select value={formData.role} onValueChange={(value) => updateField("role", value)}>
+                    <SelectTrigger className={errors.role ? "border-destructive" : ""}>
+                      <SelectValue placeholder="Select your role" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border border-border z-50">
+                      <SelectItem value="patient">Patient</SelectItem>
+                      <SelectItem value="front-desk">Front Desk Staff</SelectItem>
+                      <SelectItem value="doctor">Doctor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.role && (
+                    <p className="text-sm text-destructive">{errors.role}</p>
                   )}
                 </div>
               </div>
