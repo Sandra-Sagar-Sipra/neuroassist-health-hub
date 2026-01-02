@@ -1,7 +1,23 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PriorityChip } from "@/components/PriorityChip";
 import { WaitTimer } from "@/components/WaitTimer";
-import { Phone, Users, AlertTriangle, CheckCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Phone, Users, AlertTriangle, CheckCircle, UserPlus } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -10,6 +26,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
+
+const doctors = [
+  { id: "1", name: "Dr. Ananya Sharma", specialization: "Neurology" },
+  { id: "2", name: "Dr. Rohan Mehta", specialization: "Neurology" },
+  { id: "3", name: "Dr. Kavita Nair", specialization: "Neurology" },
+];
 
 interface TriagePatient {
   id: string;
@@ -76,9 +99,40 @@ const mockPatients: TriagePatient[] = [
 const sortedPatients = [...mockPatients].sort((a, b) => a.triageScore - b.triageScore);
 
 export default function AdminDashboard() {
-  const criticalCount = mockPatients.filter(p => p.triageScore <= 3).length;
-  const stableCount = mockPatients.filter(p => p.triageScore > 3).length;
-  const totalPatients = mockPatients.length;
+  const { toast } = useToast();
+  const [patients, setPatients] = useState(sortedPatients);
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<TriagePatient | null>(null);
+  const [selectedDoctor, setSelectedDoctor] = useState("");
+
+  const criticalCount = patients.filter(p => p.triageScore <= 3).length;
+  const stableCount = patients.filter(p => p.triageScore > 3).length;
+  const totalPatients = patients.length;
+
+  const handleAssignClick = (patient: TriagePatient) => {
+    setSelectedPatient(patient);
+    setSelectedDoctor("");
+    setAssignDialogOpen(true);
+  };
+
+  const handleAssignDoctor = () => {
+    if (!selectedPatient || !selectedDoctor) return;
+    
+    const doctor = doctors.find(d => d.id === selectedDoctor);
+    if (doctor) {
+      // Remove patient from queue after assignment
+      setPatients(prev => prev.filter(p => p.id !== selectedPatient.id));
+      
+      toast({
+        title: "Patient Assigned",
+        description: `${selectedPatient.name} has been assigned to ${doctor.name}`,
+      });
+    }
+    
+    setAssignDialogOpen(false);
+    setSelectedPatient(null);
+    setSelectedDoctor("");
+  };
 
   return (
     <div className="space-y-6">
@@ -137,11 +191,12 @@ export default function AdminDashboard() {
                   <TableHead className="font-semibold text-foreground">Priority</TableHead>
                   <TableHead className="font-semibold text-foreground">Patient</TableHead>
                   <TableHead className="font-semibold text-foreground">AI Intake Summary</TableHead>
-                  <TableHead className="font-semibold text-foreground text-right">Wait Time</TableHead>
+                  <TableHead className="font-semibold text-foreground">Wait Time</TableHead>
+                  <TableHead className="font-semibold text-foreground text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedPatients.map((patient) => (
+                {patients.map((patient) => (
                   <TableRow 
                     key={patient.id} 
                     className="hover:bg-accent/50 transition-colors"
@@ -163,8 +218,19 @@ export default function AdminDashboard() {
                         {patient.symptoms}
                       </p>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell>
                       <WaitTimer checkInTime={patient.checkInTime} />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleAssignClick(patient)}
+                        className="gap-1.5"
+                      >
+                        <UserPlus className="h-4 w-4" />
+                        Assign to Doctor
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -173,6 +239,48 @@ export default function AdminDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Assign to Doctor Dialog */}
+      <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Assign to Doctor</DialogTitle>
+            <DialogDescription>
+              {selectedPatient && (
+                <>Assign <span className="font-medium text-foreground">{selectedPatient.name}</span> to a doctor.</>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Select Doctor</label>
+              <Select value={selectedDoctor} onValueChange={setSelectedDoctor}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a doctor" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border border-border z-50">
+                  {doctors.map((doctor) => (
+                    <SelectItem key={doctor.id} value={doctor.id}>
+                      <div className="flex flex-col">
+                        <span>{doctor.name}</span>
+                        <span className="text-xs text-muted-foreground">{doctor.specialization}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setAssignDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAssignDoctor} disabled={!selectedDoctor}>
+                Assign Patient
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
