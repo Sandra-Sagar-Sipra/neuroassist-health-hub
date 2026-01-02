@@ -14,6 +14,8 @@ import AppointmentConfirmed from "./pages/dashboard/AppointmentConfirmed";
 import PastConsultations from "./pages/dashboard/PastConsultations";
 import Profile from "./pages/dashboard/Profile";
 import { AuthProvider } from "./contexts/AuthContext";
+import { AdminLayout } from "./components/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +36,9 @@ const App = () => (
               <Route path="appointment-confirmed" element={<AppointmentConfirmed />} />
               <Route path="consultations" element={<PastConsultations />} />
               <Route path="profile" element={<Profile />} />
+            </Route>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route path="dashboard" element={<AdminDashboard />} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
